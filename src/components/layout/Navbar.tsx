@@ -22,6 +22,9 @@ export default function Navbar() {
             <>
               <Link to="/cart" className="text-gray-600 hover:text-blue-600">Giỏ hàng</Link>
               <Link to="/orders" className="text-gray-600 hover:text-blue-600">Đơn hàng</Link>
+              {user?.role === 'admin' && (
+                <Link to="/admin/products" className="text-purple-600 hover:text-purple-700 font-medium">Quản trị</Link>
+              )}
               <Link to="/profile" className="text-gray-600 hover:text-blue-600">{user?.name}</Link>
               <button
                 onClick={handleLogout}

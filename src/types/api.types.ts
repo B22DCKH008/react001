@@ -9,6 +9,7 @@ export interface Product {
   name: string;
   price: number;
   description: string;
+  image_url?: string | null;
   category?: Category;
   created_at: string;
   updated_at: string;
@@ -52,6 +53,7 @@ export interface Order {
   status: OrderStatus;
   total_amount: number;
   items: OrderItem[];
+  user?: { id: number; name: string; email: string };
   created_at: string;
   updated_at: string;
 }

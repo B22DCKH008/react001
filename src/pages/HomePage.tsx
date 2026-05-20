@@ -4,12 +4,13 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { productApi } from '../api/product';
 import type { ProductFilter } from '../api/product';
+import { categoryApi } from '../api/category';
 import { apiAssetUrl } from '../api/axios';
 
 export default function HomePage() {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<ProductFilter>({});
-  const [form, setForm] = useState({ name: '', minPrice: '', maxPrice: '' });
+  const [form, setForm] = useState({ name: '', categoryId: '', minPrice: '', maxPrice: '' });
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['products', page, filters],
@@ -17,23 +18,29 @@ export default function HomePage() {
     staleTime: 30_000,
   });
 
+  const { data: categories } = useQuery({
+    queryKey: ['homeCategories'],
+    queryFn: categoryApi.getAll,
+  });
+
   const handleFilter = (e: FormEvent) => {
     e.preventDefault();
     setPage(1);
     setFilters({
       name: form.name || undefined,
+      categoryId: form.categoryId ? Number(form.categoryId) : undefined,
       minPrice: form.minPrice ? Number(form.minPrice) : undefined,
       maxPrice: form.maxPrice ? Number(form.maxPrice) : undefined,
     });
   };
 
   const handleReset = () => {
-    setForm({ name: '', minPrice: '', maxPrice: '' });
+    setForm({ name: '', categoryId: '', minPrice: '', maxPrice: '' });
     setFilters({});
     setPage(1);
   };
 
-  const hasFilter = filters.name || filters.minPrice !== undefined || filters.maxPrice !== undefined;
+  const hasFilter = filters.name || filters.categoryId !== undefined || filters.minPrice !== undefined || filters.maxPrice !== undefined;
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
@@ -50,6 +57,21 @@ export default function HomePage() {
             placeholder="Tìm theo tên..."
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+        </div>
+        <div className="w-44">
+          <label className="block text-xs font-medium text-gray-600 mb-1">Danh mục</label>
+          <select
+            value={form.categoryId}
+            onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Tất cả</option>
+            {categories?.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="w-36">
           <label className="block text-xs font-medium text-gray-600 mb-1">Giá từ (₫)</label>

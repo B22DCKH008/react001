@@ -27,7 +27,8 @@ export default function CartPage() {
     mutationFn: orderApi.checkout,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
-      navigate('/orders');
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      navigate('/orders', { state: { checkoutSuccess: true } });
     },
   });
 

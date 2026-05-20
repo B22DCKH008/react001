@@ -6,6 +6,7 @@ export interface ProductFilter {
   limit?: number;
   name?: string;
   categoryId?: number;
+  category_id?: number;
   minPrice?: number;
   maxPrice?: number;
 }

@@ -29,6 +29,7 @@ export default function HomePage() {
     setFilters({
       name: form.name || undefined,
       categoryId: form.categoryId ? Number(form.categoryId) : undefined,
+      category_id: form.categoryId ? Number(form.categoryId) : undefined,
       minPrice: form.minPrice ? Number(form.minPrice) : undefined,
       maxPrice: form.maxPrice ? Number(form.maxPrice) : undefined,
     });
@@ -40,7 +41,11 @@ export default function HomePage() {
     setPage(1);
   };
 
-  const hasFilter = filters.name || filters.categoryId !== undefined || filters.minPrice !== undefined || filters.maxPrice !== undefined;
+  const selectedCategoryId = filters.categoryId ?? filters.category_id;
+  const hasFilter = filters.name || selectedCategoryId !== undefined || filters.minPrice !== undefined || filters.maxPrice !== undefined;
+  const visibleProducts = selectedCategoryId !== undefined
+    ? data?.data.filter((product) => String(product.category?.id) === String(selectedCategoryId)) ?? []
+    : data?.data ?? [];
 
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
@@ -62,7 +67,16 @@ export default function HomePage() {
           <label className="block text-xs font-medium text-gray-600 mb-1">Danh mục</label>
           <select
             value={form.categoryId}
-            onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+            onChange={(e) => {
+              const categoryId = e.target.value;
+              setForm({ ...form, categoryId });
+              setPage(1);
+              setFilters((current) => ({
+                ...current,
+                categoryId: categoryId ? Number(categoryId) : undefined,
+                category_id: categoryId ? Number(categoryId) : undefined,
+              }));
+            }}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Tất cả</option>
@@ -117,12 +131,12 @@ export default function HomePage() {
         <div className="text-center py-16 text-gray-500">Đang tải...</div>
       ) : isError ? (
         <div className="text-center py-16 text-red-500">Không thể tải sản phẩm</div>
-      ) : !data?.data.length ? (
+      ) : !visibleProducts.length ? (
         <div className="text-center py-16 text-gray-500">Không có sản phẩm nào</div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {data.data.map((product) => (
+            {visibleProducts.map((product) => (
               <Link
                 key={product.id}
                 to={`/products/${product.id}`}
@@ -153,7 +167,7 @@ export default function HomePage() {
           </div>
 
           {/* Pagination */}
-          {data.totalPages > 1 && (
+          {data && data.totalPages > 1 && (
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}

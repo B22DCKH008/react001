@@ -8,14 +8,21 @@ import { categoryApi } from '../../api/category';
 import type { Product } from '../../types/api.types';
 import AdminNav from '../../components/admin/AdminNav';
 
-const emptyForm: ProductFormData = { name: '', price: 0, description: '', category_id: undefined };
+type ProductAdminForm = {
+  name: string;
+  price: string;
+  description: string;
+  category_id?: number;
+};
+
+const emptyForm: ProductAdminForm = { name: '', price: '', description: '', category_id: undefined };
 
 export default function AdminProductsPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<ProductFormData>(emptyForm);
+  const [form, setForm] = useState<ProductAdminForm>(emptyForm);
   const [error, setError] = useState('');
 
   const { data, isLoading } = useQuery({
@@ -68,7 +75,7 @@ export default function AdminProductsPage() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
-    setForm({ name: p.name, price: Number(p.price), description: p.description, category_id: p.category?.id });
+    setForm({ name: p.name, price: String(p.price), description: p.description ?? '', category_id: p.category?.id });
     setShowForm(true);
     setError('');
   };
@@ -76,11 +83,11 @@ export default function AdminProductsPage() {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { setError('Tên sản phẩm không được để trống'); return; }
-    if (!form.price || form.price <= 0) { setError('Giá phải lớn hơn 0'); return; }
-    if (!form.description.trim()) { setError('Mô tả không được để trống'); return; }
+    const price = Number(form.price);
+    if (!form.price.trim() || Number.isNaN(price) || price <= 0) { setError('Giá phải lớn hơn 0'); return; }
     const data: ProductFormData = {
       name: form.name.trim(),
-      price: Number(form.price),
+      price,
       description: form.description.trim(),
       category_id: form.category_id || undefined,
     };
@@ -120,12 +127,12 @@ export default function AdminProductsPage() {
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Giá (₫) *</label>
-            <input type="number" min={0} value={form.price}
-              onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+            <input type="text" inputMode="decimal" value={form.price}
+              onChange={(e) => setForm({ ...form, price: e.target.value.replace(/[^\d.]/g, '') })}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Mô tả *</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Mô tả</label>
             <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="Mô tả sản phẩm"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />

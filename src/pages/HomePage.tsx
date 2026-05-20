@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { productApi } from '../api/product';
 import type { ProductFilter } from '../api/product';
@@ -100,7 +101,11 @@ export default function HomePage() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {data.data.map((product) => (
-              <div key={product.id} className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
+              <Link
+                key={product.id}
+                to={`/products/${product.id}`}
+                className="block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
                 {product.image_url ? (
                   <img
                     src={apiAssetUrl(product.image_url)}
@@ -121,7 +126,7 @@ export default function HomePage() {
                 <p className="text-blue-600 font-bold">
                   {Number(product.price).toLocaleString('vi-VN')} ₫
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
 

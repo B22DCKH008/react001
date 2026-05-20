@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout';
 import ProtectedRoute from './router/ProtectedRoute';
 import AdminRoute from './router/AdminRoute';
 import HomePage from './pages/HomePage';
+import ProductDetailPage from './pages/ProductDetailPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CartPage from './pages/CartPage';
@@ -32,6 +33,14 @@ export default function App() {
               element={
                 <Layout>
                   <HomePage />
+                </Layout>
+              }
+            />
+            <Route
+              path="/products/:id"
+              element={
+                <Layout>
+                  <ProductDetailPage />
                 </Layout>
               }
             />

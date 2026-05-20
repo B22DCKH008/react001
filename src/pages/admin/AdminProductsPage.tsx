@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productApi } from '../../api/product';
 import type { ProductFormData } from '../../api/product';
+import { apiAssetUrl } from '../../api/axios';
 import { categoryApi } from '../../api/category';
 import type { Product } from '../../types/api.types';
 import AdminNav from '../../components/admin/AdminNav';
@@ -34,7 +35,11 @@ export default function AdminProductsPage() {
 
   const uploadMutation = useMutation({
     mutationFn: ({ id, file }: { id: number; file: File }) => productApi.uploadImage(id, file),
-    onSuccess: () => { invalidate(); setUploadingId(null); },
+    onSuccess: () => { invalidate(); setUploadingId(null); setError(''); },
+    onError: (err: any) => {
+      setUploadingId(null);
+      setError(err.response?.data?.message || 'Lỗi upload ảnh');
+    },
   });
 
   const createMutation = useMutation({
@@ -173,7 +178,7 @@ export default function AdminProductsPage() {
                   <tr key={p.id} className="hover:bg-gray-50">
                     <td className="px-3 py-3">
                       {p.image_url ? (
-                        <img src={`http://localhost:3000${p.image_url}`} alt={p.name}
+                        <img src={apiAssetUrl(p.image_url)} alt={p.name}
                           className="w-10 h-10 object-cover rounded-lg" />
                       ) : (
                         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300 text-xs">—</div>

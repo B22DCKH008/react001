@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { productApi } from '../api/product';
 import type { ProductFilter } from '../api/product';
+import { apiAssetUrl } from '../api/axios';
 
 export default function HomePage() {
   const [page, setPage] = useState(1);
@@ -102,7 +103,7 @@ export default function HomePage() {
               <div key={product.id} className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">
                 {product.image_url ? (
                   <img
-                    src={`http://localhost:3000${product.image_url}`}
+                    src={apiAssetUrl(product.image_url)}
                     alt={product.name}
                     className="w-full h-36 object-cover rounded-lg mb-3"
                   />

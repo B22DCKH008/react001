@@ -109,11 +109,21 @@ export default function AdminOrdersPage() {
           </div>
           {data && data.totalPages > 1 && (
             <div className="flex items-center justify-center gap-3">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 hover:bg-gray-50">Trước</button>
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 hover:bg-gray-50"
+              >
+                Trước
+              </button>
               <span className="text-sm text-gray-600">Trang {data.page} / {data.totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))} disabled={page === data.totalPages}
-                className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 hover:bg-gray-50">Sau</button>
+              <button
+                onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
+                disabled={page === data.totalPages}
+                className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 hover:bg-gray-50"
+              >
+                Sau
+              </button>
             </div>
           )}
         </>

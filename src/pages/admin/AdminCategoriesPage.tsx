@@ -21,14 +21,20 @@ export default function AdminCategoriesPage() {
 
   const createMutation = useMutation({
     mutationFn: (data: { name: string; description?: string }) => categoryApi.create(data),
-    onSuccess: () => { invalidate(); resetForm(); },
+    onSuccess: () => {
+      invalidate();
+      resetForm();
+    },
     onError: (err: any) => setError(err.response?.data?.message || 'Lỗi tạo danh mục'),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: { name?: string; description?: string } }) =>
       categoryApi.update(id, data),
-    onSuccess: () => { invalidate(); resetForm(); },
+    onSuccess: () => {
+      invalidate();
+      resetForm();
+    },
     onError: (err: any) => setError(err.response?.data?.message || 'Lỗi cập nhật'),
   });
 
@@ -53,7 +59,10 @@ export default function AdminCategoriesPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) { setError('Tên danh mục không được để trống'); return; }
+    if (!form.name.trim()) {
+      setError('Tên danh mục không được để trống');
+      return;
+    }
     const data = { name: form.name.trim(), description: form.description.trim() || undefined };
     if (editing) updateMutation.mutate({ id: editing.id, data });
     else createMutation.mutate(data);
@@ -72,7 +81,12 @@ export default function AdminCategoriesPage() {
         <h1 className="text-xl font-bold text-gray-800">Quản lý danh mục</h1>
         {!showForm && (
           <button
-            onClick={() => { setShowForm(true); setEditing(null); setForm({ name: '', description: '' }); setError(''); }}
+            onClick={() => {
+              setShowForm(true);
+              setEditing(null);
+              setForm({ name: '', description: '' });
+              setError('');
+            }}
             className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             + Thêm danh mục
@@ -80,7 +94,6 @@ export default function AdminCategoriesPage() {
         )}
       </div>
 
-      {/* Form */}
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-wrap gap-3 items-end">
           <div className="flex-1 min-w-[180px]">
@@ -102,18 +115,23 @@ export default function AdminCategoriesPage() {
             />
           </div>
           {error && <p className="w-full text-red-500 text-sm">{error}</p>}
-          <button type="submit" disabled={isPending}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
             {isPending ? 'Đang lưu...' : editing ? 'Cập nhật' : 'Tạo mới'}
           </button>
-          <button type="button" onClick={resetForm}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <button
+            type="button"
+            onClick={resetForm}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
             Huỷ
           </button>
         </form>
       )}
 
-      {/* Table */}
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">Đang tải...</div>
       ) : (

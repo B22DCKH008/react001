@@ -27,7 +27,7 @@ const sortOptions: Array<{ key: SortKey; label: string }> = [
 ];
 
 function formatPrice(price: number) {
-  return `${Number(price).toLocaleString('vi-VN')}d`;
+  return `${Number(price).toLocaleString('vi-VN')}đ`;
 }
 
 function isProductInPriceRanges(product: Product, selectedRangeIds: string[]) {
@@ -118,10 +118,10 @@ export default function HomePage() {
             {categories.length > 5 && (
               <button
                 onClick={() => setShowAllCategories((value) => !value)}
-                className="mt-5 flex items-center gap-1 text-xl text-gray-950 hover:text-red-700"
+                className="mt-4 flex items-center gap-1 text-sm font-medium text-gray-900 hover:text-red-700"
               >
-                {showAllCategories ? 'ẨN BỚT' : 'XEM THÊM'}
-                <span className="text-2xl leading-none">{showAllCategories ? '^' : '⌄'}</span>
+                {showAllCategories ? 'Thu gọn' : 'Xem thêm'}
+                <span className="text-base leading-none">{showAllCategories ? '^' : '⌄'}</span>
               </button>
             )}
           </section>
@@ -167,7 +167,9 @@ export default function HomePage() {
           {isLoading ? (
             <div className="py-16 text-center text-gray-500">Đang tải...</div>
           ) : isError ? (
-            <div className="py-16 text-center text-red-600">Không thể tải sản phẩm</div>
+            <div className="py-16 text-center text-red-600">
+              Không thể tải sản phẩm. Vui lòng kiểm tra backend tại http://localhost:3000.
+            </div>
           ) : !paginatedProducts.length ? (
             <div className="py-16 text-center text-gray-500">Không có sản phẩm nào</div>
           ) : (

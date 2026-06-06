@@ -5,16 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { cartApi } from '../../api/cart';
 import { useAuth } from '../../store/AuthContext';
 
-const navGroups = [
-  'Bút viết',
-  'Văn phòng phẩm',
-  'Dụng Cụ Học Tập',
-  'Mỹ Thuật',
-  'Giấy In',
-  'Bút cao cấp',
-  'Sports - Lifestyle',
-];
-
 export default function Navbar() {
   const { user, isLoggedIn, logout } = useAuth();
   const navigate = useNavigate();
@@ -91,18 +81,6 @@ export default function Navbar() {
               {cartCount}
             </span>
           </Link>
-        </div>
-      </div>
-
-      <div className="bg-red-50 text-gray-950">
-        <div className="mx-auto flex max-w-[1700px] items-center justify-between gap-4 overflow-x-auto px-6 py-3 lg:px-10">
-          {navGroups.map((group) => (
-            <button key={group} className="flex shrink-0 items-center gap-2 text-lg hover:text-red-700">
-              <span className="text-red-600">&#10023;</span>
-              <span>{group}</span>
-              <span className="text-xl leading-none">&#8964;</span>
-            </button>
-          ))}
         </div>
       </div>
     </header>

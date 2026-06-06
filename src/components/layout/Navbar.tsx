@@ -1,51 +1,110 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { cartApi } from '../../api/cart';
 import { useAuth } from '../../store/AuthContext';
+
+const navGroups = [
+  'Bút viết',
+  'Văn phòng phẩm',
+  'Dụng Cụ Học Tập',
+  'Mỹ Thuật',
+  'Giấy In',
+  'Bút cao cấp',
+  'Sports - Lifestyle',
+];
 
 export default function Navbar() {
   const { user, isLoggedIn, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
+  const { data: cart } = useQuery({
+    queryKey: ['cart'],
+    queryFn: cartApi.get,
+    enabled: isLoggedIn,
+  });
+  const cartCount = cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const handleSearch = (event: FormEvent) => {
+    event.preventDefault();
+    const keyword = search.trim();
+    navigate(keyword ? `/?q=${encodeURIComponent(keyword)}` : '/');
+  };
+
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3">
-      <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-blue-600">ShopApp</Link>
+    <header className="bg-red-700 text-white">
+      <div className="mx-auto flex max-w-[1700px] items-center gap-6 px-6 py-4 lg:px-10">
+        <Link to="/" className="shrink-0 text-3xl font-black italic tracking-wide">
+          SHOP BÌNH
+        </Link>
 
-        <div className="flex items-center gap-4 text-sm">
-          <Link to="/" className="text-gray-600 hover:text-blue-600">Sản phẩm</Link>
+        <form onSubmit={handleSearch} className="flex min-w-[260px] flex-1 overflow-hidden rounded-xl bg-white">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Tìm kiếm sản phẩm..."
+            className="h-12 min-w-0 flex-1 px-4 text-lg text-gray-700 outline-none"
+          />
+          <button
+            type="submit"
+            aria-label="Tìm kiếm"
+            className="flex h-12 w-14 items-center justify-center bg-red-950 text-2xl text-white transition-colors hover:bg-red-900"
+          >
+            &#128269;
+          </button>
+        </form>
 
+        <div className="hidden items-center gap-3 lg:flex">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-950 text-xl">&#9742;</div>
+          <div className="leading-tight">
+            <div className="text-xl font-bold">1900 866 819</div>
+            <div className="text-sm">Hỗ trợ khách hàng</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
           {isLoggedIn ? (
             <>
-              <Link to="/cart" className="text-gray-600 hover:text-blue-600">Giỏ hàng</Link>
-              <Link to="/orders" className="text-gray-600 hover:text-blue-600">Đơn hàng</Link>
-              {user?.role === 'admin' && (
-                <Link to="/admin/products" className="text-purple-600 hover:text-purple-700 font-medium">Quản trị</Link>
-              )}
-              <Link to="/profile" className="text-gray-600 hover:text-blue-600">{user?.name}</Link>
-              <button
-                onClick={handleLogout}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition-colors"
-              >
+              <Link to="/profile" className="hidden rounded-full bg-red-950 px-4 py-2 font-semibold hover:bg-red-900 sm:block">
+                {user?.name}
+              </Link>
+              <button onClick={handleLogout} className="rounded-full bg-white px-4 py-2 font-semibold text-red-700 hover:bg-red-50">
                 Đăng xuất
               </button>
             </>
           ) : (
-            <>
-              <Link to="/login" className="text-gray-600 hover:text-blue-600">Đăng nhập</Link>
-              <Link
-                to="/register"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition-colors"
-              >
-                Đăng ký
-              </Link>
-            </>
+            <div className="flex items-center gap-3">
+              <Link to="/login" className="font-bold hover:text-red-100">Đăng nhập</Link>
+              <Link to="/register" className="text-sm font-semibold hover:text-red-100">Đăng ký</Link>
+            </div>
           )}
+          <Link to="/cart" className="relative flex h-11 w-11 items-center justify-center rounded-full bg-red-950 text-xl hover:bg-red-900">
+            &#128717;
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold text-red-700">
+              {cartCount}
+            </span>
+          </Link>
         </div>
       </div>
-    </nav>
+
+      <div className="bg-red-50 text-gray-950">
+        <div className="mx-auto flex max-w-[1700px] items-center justify-between gap-4 overflow-x-auto px-6 py-3 lg:px-10">
+          {navGroups.map((group) => (
+            <button key={group} className="flex shrink-0 items-center gap-2 text-lg hover:text-red-700">
+              <span className="text-red-600">&#10023;</span>
+              <span>{group}</span>
+              <span className="text-xl leading-none">&#8964;</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </header>
   );
 }

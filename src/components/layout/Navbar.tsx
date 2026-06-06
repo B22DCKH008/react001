@@ -16,6 +16,7 @@ export default function Navbar() {
     enabled: isLoggedIn,
   });
   const cartCount = cart?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
+  const isAdmin = user?.role === 'admin';
 
   const handleLogout = () => {
     logout();
@@ -75,6 +76,16 @@ export default function Navbar() {
               <Link to="/register" className="text-sm font-semibold hover:text-red-100">Đăng ký</Link>
             </div>
           )}
+
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="rounded-full bg-white px-4 py-2 font-semibold text-red-700 transition-colors hover:bg-red-50"
+            >
+              Quản trị
+            </Link>
+          )}
+
           <Link to="/cart" className="relative flex h-11 w-11 items-center justify-center rounded-full bg-red-950 text-xl hover:bg-red-900">
             &#128717;
             <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold text-red-700">

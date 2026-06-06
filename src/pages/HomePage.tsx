@@ -50,7 +50,7 @@ export default function HomePage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['homeProducts', searchKeyword],
-    queryFn: () => productApi.getAll({ page: 1, limit: 1000, name: searchKeyword || undefined }),
+    queryFn: () => productApi.getAll({ page: 1, limit: 100, name: searchKeyword || undefined }),
     staleTime: 30_000,
   });
 

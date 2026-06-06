@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { productApi } from '../../api/product';
 import type { ProductFormData } from '../../api/product';
 import { apiAssetUrl } from '../../api/axios';
@@ -22,13 +22,19 @@ const emptyForm: ProductAdminForm = {
   category_id: undefined,
 };
 
+function formatPrice(value: number) {
+  return `${Number(value).toLocaleString('vi-VN')}đ`;
+}
+
 export default function AdminProductsPage() {
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<ProductAdminForm>(emptyForm);
   const [error, setError] = useState('');
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['adminProducts', page],
@@ -39,9 +45,6 @@ export default function AdminProductsPage() {
     queryKey: ['adminCategories'],
     queryFn: categoryApi.getAll,
   });
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadingId, setUploadingId] = useState<number | null>(null);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['adminProducts'] });
 
@@ -88,20 +91,27 @@ export default function AdminProductsPage() {
     setError('');
   };
 
-  const openEdit = (p: Product) => {
-    setEditing(p);
+  const openCreate = () => {
+    setShowForm(true);
+    setEditing(null);
+    setForm(emptyForm);
+    setError('');
+  };
+
+  const openEdit = (product: Product) => {
+    setEditing(product);
     setForm({
-      name: p.name,
-      price: String(p.price),
-      description: p.description ?? '',
-      category_id: p.category?.id,
+      name: product.name,
+      price: String(product.price),
+      description: product.description ?? '',
+      category_id: product.category?.id,
     });
     setShowForm(true);
     setError('');
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
     if (!form.name.trim()) {
       setError('Tên sản phẩm không được để trống');
       return;
@@ -111,36 +121,38 @@ export default function AdminProductsPage() {
       setError('Giá phải lớn hơn 0');
       return;
     }
-    const data: ProductFormData = {
+
+    const payload: ProductFormData = {
       name: form.name.trim(),
       price,
       description: form.description.trim(),
       category_id: form.category_id || undefined,
     };
-    if (editing) updateMutation.mutate({ id: editing.id, data });
-    else createMutation.mutate(data);
+
+    if (editing) updateMutation.mutate({ id: editing.id, data: payload });
+    else createMutation.mutate(payload);
   };
 
-  const handleDelete = (p: Product) => {
-    if (window.confirm(`Xoá sản phẩm "${p.name}"?`)) deleteMutation.mutate(p.id);
+  const handleDelete = (product: Product) => {
+    if (window.confirm(`Xóa sản phẩm "${product.name}"?`)) deleteMutation.mutate(product.id);
   };
 
+  const products = data?.data ?? [];
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="max-w-6xl mx-auto py-6 px-4">
+    <div className="mx-auto max-w-[1700px] bg-white px-5 py-6 lg:px-8">
       <AdminNav />
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-gray-800">Quản lý sản phẩm</h1>
+
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-5">
+        <div>
+          <h1 className="text-3xl font-bold uppercase text-gray-800">Quản lý sản phẩm</h1>
+          <p className="mt-1 text-gray-500">Thêm, sửa, xóa và cập nhật hình ảnh sản phẩm.</p>
+        </div>
         {!showForm && (
           <button
-            onClick={() => {
-              setShowForm(true);
-              setEditing(null);
-              setForm(emptyForm);
-              setError('');
-            }}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            onClick={openCreate}
+            className="rounded-full bg-red-600 px-5 py-3 font-bold text-white transition-colors hover:bg-red-700"
           >
             + Thêm sản phẩm
           </button>
@@ -148,132 +160,138 @@ export default function AdminProductsPage() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <form onSubmit={handleSubmit} className="mb-6 grid gap-4 rounded-[8px] border border-red-100 bg-red-50 p-5 md:grid-cols-2">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Tên sản phẩm *</label>
+            <label className="mb-2 block text-sm font-bold text-gray-700">Tên sản phẩm *</label>
             <input
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              className="w-full rounded-[8px] border border-gray-300 px-3 py-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
               placeholder="Tên sản phẩm"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Giá (₫) *</label>
+            <label className="mb-2 block text-sm font-bold text-gray-700">Giá *</label>
             <input
               type="text"
               inputMode="decimal"
               value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value.replace(/[^\d.]/g, '') })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Mô tả</label>
-            <input
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Mô tả sản phẩm"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              onChange={(event) => setForm({ ...form, price: event.target.value.replace(/[^\d.]/g, '') })}
+              className="w-full rounded-[8px] border border-gray-300 px-3 py-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              placeholder="0"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Danh mục</label>
+            <label className="mb-2 block text-sm font-bold text-gray-700">Danh mục</label>
             <select
               value={form.category_id ?? ''}
-              onChange={(e) => setForm({ ...form, category_id: e.target.value ? Number(e.target.value) : undefined })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              onChange={(event) => setForm({ ...form, category_id: event.target.value ? Number(event.target.value) : undefined })}
+              className="w-full rounded-[8px] border border-gray-300 bg-white px-3 py-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
             >
-              <option value="">— Không có —</option>
-              {categories?.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              <option value="">Không có</option>
+              {categories?.map((category) => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
             </select>
           </div>
-          {error && <p className="sm:col-span-2 text-red-500 text-sm">{error}</p>}
-          <div className="sm:col-span-2 flex gap-2">
+          <div className="md:col-span-2">
+            <label className="mb-2 block text-sm font-bold text-gray-700">Mô tả</label>
+            <textarea
+              value={form.description}
+              onChange={(event) => setForm({ ...form, description: event.target.value })}
+              className="min-h-24 w-full rounded-[8px] border border-gray-300 px-3 py-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              placeholder="Mô tả sản phẩm"
+            />
+          </div>
+          {error && <p className="md:col-span-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-600">{error}</p>}
+          <div className="flex gap-3 md:col-span-2">
             <button
               type="submit"
               disabled={isPending}
-              className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="rounded-full bg-red-600 px-5 py-2.5 font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
             >
               {isPending ? 'Đang lưu...' : editing ? 'Cập nhật' : 'Tạo mới'}
             </button>
             <button
               type="button"
               onClick={resetForm}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="rounded-full border border-gray-300 px-5 py-2.5 font-bold text-gray-700 transition-colors hover:border-red-600 hover:text-red-600"
             >
-              Huỷ
+              Hủy
             </button>
           </div>
         </form>
       )}
 
       {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Đang tải...</div>
+        <div className="py-16 text-center text-gray-500">Đang tải...</div>
       ) : (
         <>
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+          <div className="overflow-x-auto rounded-[8px] border border-gray-200 bg-white shadow-sm">
+            <table className="w-full min-w-[900px] text-sm">
+              <thead className="bg-red-50 text-xs uppercase text-gray-600">
                 <tr>
-                  <th className="px-3 py-3 text-left w-14">Ảnh</th>
-                  <th className="px-4 py-3 text-left w-12">ID</th>
+                  <th className="px-4 py-3 text-left">Ảnh</th>
+                  <th className="px-4 py-3 text-left">ID</th>
                   <th className="px-4 py-3 text-left">Tên</th>
                   <th className="px-4 py-3 text-left">Giá</th>
                   <th className="px-4 py-3 text-left">Danh mục</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="px-4 py-3 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {!data?.data.length && (
-                  <tr><td colSpan={6} className="text-center py-8 text-gray-500">Chưa có sản phẩm</td></tr>
+                {!products.length && (
+                  <tr><td colSpan={6} className="py-10 text-center text-gray-500">Chưa có sản phẩm</td></tr>
                 )}
-                {data?.data.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-3">
-                      {p.image_url ? (
-                        <img src={apiAssetUrl(p.image_url)} alt={p.name} className="w-10 h-10 object-cover rounded-lg" />
+                {products.map((product) => (
+                  <tr key={product.id} className="transition-colors hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      {product.image_url ? (
+                        <img src={apiAssetUrl(product.image_url)} alt={product.name} className="h-14 w-14 rounded-[8px] object-cover" />
                       ) : (
-                        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-300 text-xs">—</div>
+                        <div className="flex h-14 w-14 items-center justify-center rounded-[8px] bg-gray-100 text-xs text-gray-400">Ảnh</div>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-400">{p.id}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800">{p.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{Number(p.price).toLocaleString('vi-VN')} ₫</td>
-                    <td className="px-4 py-3 text-gray-500">{p.category?.name ?? '—'}</td>
-                    <td className="px-4 py-3 text-right space-x-3">
-                      <button onClick={() => openEdit(p)} className="text-blue-600 hover:text-blue-800 text-xs font-medium">Sửa</button>
-                      <button
-                        onClick={() => {
-                          setUploadingId(p.id);
-                          fileInputRef.current?.click();
-                        }}
-                        disabled={uploadMutation.isPending && uploadingId === p.id}
-                        className="text-green-600 hover:text-green-800 text-xs font-medium disabled:opacity-40"
-                      >
-                        {uploadMutation.isPending && uploadingId === p.id ? '...' : 'Ảnh'}
-                      </button>
-                      <button onClick={() => handleDelete(p)} className="text-red-500 hover:text-red-700 text-xs font-medium">Xoá</button>
+                    <td className="px-4 py-3 font-bold text-gray-400">#{product.id}</td>
+                    <td className="px-4 py-3 font-bold text-gray-900">{product.name}</td>
+                    <td className="px-4 py-3 font-bold text-red-600">{formatPrice(product.price)}</td>
+                    <td className="px-4 py-3 text-gray-600">{product.category?.name ?? 'Không có'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => openEdit(product)} className="rounded-full border border-gray-300 px-3 py-1.5 font-semibold text-gray-700 hover:border-red-600 hover:text-red-600">Sửa</button>
+                        <button
+                          onClick={() => {
+                            setUploadingId(product.id);
+                            fileInputRef.current?.click();
+                          }}
+                          disabled={uploadMutation.isPending && uploadingId === product.id}
+                          className="rounded-full border border-gray-300 px-3 py-1.5 font-semibold text-gray-700 hover:border-red-600 hover:text-red-600 disabled:opacity-50"
+                        >
+                          {uploadMutation.isPending && uploadingId === product.id ? '...' : 'Ảnh'}
+                        </button>
+                        <button onClick={() => handleDelete(product)} className="rounded-full bg-red-50 px-3 py-1.5 font-semibold text-red-600 hover:bg-red-100">Xóa</button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
           {data && data.totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3">
+            <div className="mt-6 flex items-center justify-center gap-3">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:border-red-600 hover:text-red-600 disabled:opacity-40"
               >
                 Trước
               </button>
               <span className="text-sm text-gray-600">Trang {data.page} / {data.totalPages}</span>
               <button
-                onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
+                onClick={() => setPage((current) => Math.min(data.totalPages, current + 1))}
                 disabled={page === data.totalPages}
-                className="px-4 py-2 rounded-lg border text-sm font-medium disabled:opacity-40 hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:border-red-600 hover:text-red-600 disabled:opacity-40"
               >
                 Sau
               </button>
@@ -287,10 +305,10 @@ export default function AdminProductsPage() {
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
+        onChange={(event) => {
+          const file = event.target.files?.[0];
           if (file && uploadingId !== null) uploadMutation.mutate({ id: uploadingId, file });
-          e.target.value = '';
+          event.target.value = '';
         }}
       />
     </div>

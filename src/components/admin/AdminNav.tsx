@@ -9,22 +9,24 @@ const links = [
 
 export default function AdminNav() {
   return (
-    <div className="bg-purple-50 border border-purple-100 rounded-xl flex gap-1 p-1 mb-6">
-      {links.map((link) => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          className={({ isActive }) =>
-            `flex-1 text-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-              isActive
-                ? 'bg-white text-purple-700 shadow-sm'
-                : 'text-gray-600 hover:text-purple-600'
-            }`
-          }
-        >
-          {link.label}
-        </NavLink>
-      ))}
+    <div className="mb-6 rounded-[8px] border border-red-100 bg-white p-2 shadow-sm">
+      <div className="grid gap-2 sm:grid-cols-4">
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            to={link.to}
+            className={({ isActive }) =>
+              `rounded-[8px] px-4 py-3 text-center text-sm font-bold transition-colors ${
+                isActive
+                  ? 'bg-red-600 text-white shadow-sm'
+                  : 'bg-red-50 text-gray-700 hover:bg-red-100 hover:text-red-700'
+              }`
+            }
+          >
+            {link.label}
+          </NavLink>
+        ))}
+      </div>
     </div>
   );
 }

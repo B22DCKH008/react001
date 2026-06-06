@@ -1,7 +1,12 @@
-import { useNavigate, Link } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { cartApi } from '../api/cart';
 import { orderApi } from '../api/order';
+import { apiAssetUrl } from '../api/axios';
+
+function formatPrice(price: number) {
+  return `${Number(price).toLocaleString('vi-VN')}đ`;
+}
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -36,105 +41,149 @@ export default function CartPage() {
     (sum, item) => sum + Number(item.product.price) * item.quantity,
     0,
   ) ?? 0;
+  const totalQuantity = cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
 
   if (isLoading) {
-    return <div className="text-center py-16 text-gray-500">Đang tải...</div>;
+    return <div className="py-16 text-center text-gray-500">Đang tải...</div>;
   }
 
   if (!cart?.items.length) {
     return (
-      <div className="max-w-2xl mx-auto py-16 text-center">
-        <p className="text-5xl mb-4">🛒</p>
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Giỏ hàng trống</h2>
-        <p className="text-gray-500 mb-6">Hãy thêm sản phẩm vào giỏ hàng</p>
-        <Link
-          to="/"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
-        >
-          Xem sản phẩm
-        </Link>
+      <div className="mx-auto max-w-[1700px] bg-white px-5 py-14 text-center lg:px-8">
+        <div className="mx-auto max-w-xl rounded-[8px] border border-red-100 bg-red-50 p-10">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white text-4xl text-red-600">
+            &#128717;
+          </div>
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Giỏ hàng trống</h1>
+          <p className="mb-6 text-gray-600">Hãy thêm sản phẩm yêu thích vào giỏ hàng.</p>
+          <Link
+            to="/"
+            className="inline-flex rounded-full bg-red-600 px-7 py-3 font-bold text-white transition-colors hover:bg-red-700"
+          >
+            Xem sản phẩm
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Giỏ hàng</h1>
+    <div className="mx-auto max-w-[1700px] bg-white px-5 py-8 lg:px-8">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-gray-200 pb-4">
+        <div>
+          <h1 className="text-3xl font-bold uppercase text-gray-800">Giỏ hàng</h1>
+          <p className="mt-1 text-gray-500">{totalQuantity} sản phẩm trong giỏ của bạn</p>
+        </div>
+        <Link to="/" className="font-semibold text-red-600 hover:text-red-700">
+          Tiếp tục mua hàng
+        </Link>
+      </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Cart items */}
-        <div className="flex-1 space-y-3">
-          {cart.items.map((item) => (
-            <div key={item.id} className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-4">
-              <div className="bg-gray-100 rounded-lg w-16 h-16 flex-shrink-0 flex items-center justify-center text-gray-400 text-xs">
-                Ảnh
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-800 truncate">{item.product.name}</p>
-                <p className="text-sm text-gray-500">
-                  {Number(item.product.price).toLocaleString('vi-VN')} ₫ / cái
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-4">
+          {cart.items.map((item) => {
+            const productPrice = Number(item.product.price);
+            const nextQuantity = Math.max(1, item.quantity - 1);
+
+            return (
+              <div key={item.id} className="grid gap-4 rounded-[8px] border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md md:grid-cols-[132px_minmax(0,1fr)_180px_150px_44px] md:items-center">
+                <Link to={`/products/${item.product.id}`} className="overflow-hidden rounded-[8px] border border-gray-100 bg-gray-100">
+                  {item.product.image_url ? (
+                    <img
+                      src={apiAssetUrl(item.product.image_url)}
+                      alt={item.product.name}
+                      className="aspect-square w-full object-cover transition-transform duration-300 hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex aspect-square w-full items-center justify-center text-sm text-gray-400">
+                      Chưa có ảnh
+                    </div>
+                  )}
+                </Link>
+
+                <div className="min-w-0">
+                  <Link to={`/products/${item.product.id}`} className="line-clamp-2 text-lg font-bold text-gray-950 hover:text-red-600">
+                    {item.product.name}
+                  </Link>
+                  {item.product.category && (
+                    <span className="mt-3 inline-flex rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-600">
+                      {item.product.category.name}
+                    </span>
+                  )}
+                  <p className="mt-3 text-base font-semibold text-gray-600">{formatPrice(productPrice)} / sản phẩm</p>
+                </div>
+
+                <div className="flex h-11 w-fit items-center rounded-full border border-gray-300">
+                  <button
+                    onClick={() => updateMutation.mutate({ itemId: item.id, quantity: nextQuantity })}
+                    disabled={updateMutation.isPending || item.quantity <= 1}
+                    className="h-11 w-11 rounded-l-full text-xl font-bold text-gray-700 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                  >
+                    -
+                  </button>
+                  <span className="w-12 text-center font-bold">{item.quantity}</span>
+                  <button
+                    onClick={() => updateMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+                    disabled={updateMutation.isPending}
+                    className="h-11 w-11 rounded-r-full text-xl font-bold text-gray-700 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <p className="text-xl font-bold text-red-600">
+                  {formatPrice(productPrice * item.quantity)}
                 </p>
-              </div>
-              {/* Quantity controls */}
-              <div className="flex items-center gap-2">
+
                 <button
-                  onClick={() => updateMutation.mutate({ itemId: item.id, quantity: item.quantity - 1 })}
-                  disabled={updateMutation.isPending}
-                  className="w-8 h-8 rounded-lg border flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                  onClick={() => removeMutation.mutate(item.id)}
+                  disabled={removeMutation.isPending}
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-2xl leading-none text-gray-400 transition-colors hover:border-red-600 hover:text-red-600 disabled:opacity-40"
+                  title="Xóa"
                 >
-                  −
-                </button>
-                <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                <button
-                  onClick={() => updateMutation.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
-                  disabled={updateMutation.isPending}
-                  className="w-8 h-8 rounded-lg border flex items-center justify-center text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors"
-                >
-                  +
+                  ×
                 </button>
               </div>
-              {/* Subtotal */}
-              <p className="w-28 text-right text-sm font-semibold text-blue-600">
-                {(Number(item.product.price) * item.quantity).toLocaleString('vi-VN')} ₫
-              </p>
-              {/* Remove */}
-              <button
-                onClick={() => removeMutation.mutate(item.id)}
-                disabled={removeMutation.isPending}
-                className="text-gray-400 hover:text-red-500 disabled:opacity-40 transition-colors text-lg leading-none"
-                title="Xoá"
-              >
-                ×
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Order summary */}
-        <div className="lg:w-64">
-          <div className="bg-white rounded-xl shadow-sm p-5 sticky top-4">
-            <h2 className="font-semibold text-gray-800 mb-4">Tổng đơn hàng</h2>
-            <div className="flex justify-between text-sm text-gray-600 mb-2">
-              <span>Tạm tính ({cart.items.length} sản phẩm)</span>
+        <aside className="h-fit rounded-[8px] border border-gray-200 bg-red-50 p-5 shadow-sm xl:sticky xl:top-5">
+          <h2 className="mb-5 text-2xl font-bold text-gray-900">Tổng đơn hàng</h2>
+          <div className="space-y-3 border-b border-red-100 pb-5 text-gray-700">
+            <div className="flex justify-between">
+              <span>Tạm tính</span>
+              <span className="font-semibold">{formatPrice(total)}</span>
             </div>
-            <div className="flex justify-between font-bold text-gray-800 text-lg mb-5">
-              <span>Tổng cộng</span>
-              <span className="text-blue-600">{total.toLocaleString('vi-VN')} ₫</span>
+            <div className="flex justify-between">
+              <span>Số lượng</span>
+              <span className="font-semibold">{totalQuantity}</span>
             </div>
-            {checkoutMutation.isError && (
-              <p className="text-red-500 text-xs mb-3">
-                {(checkoutMutation.error as any)?.response?.data?.message || 'Đặt hàng thất bại'}
-              </p>
-            )}
-            <button
-              onClick={() => checkoutMutation.mutate()}
-              disabled={checkoutMutation.isPending}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 rounded-lg transition-colors"
-            >
-              {checkoutMutation.isPending ? 'Đang xử lý...' : 'Thanh toán'}
-            </button>
+            <div className="flex justify-between">
+              <span>Vận chuyển</span>
+              <span className="font-semibold text-red-600">Tính khi xác nhận</span>
+            </div>
           </div>
-        </div>
+
+          <div className="mt-5 flex items-center justify-between text-xl font-bold">
+            <span>Tổng cộng</span>
+            <span className="text-2xl text-red-600">{formatPrice(total)}</span>
+          </div>
+
+          {checkoutMutation.isError && (
+            <p className="mt-4 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-600">
+              {(checkoutMutation.error as any)?.response?.data?.message || 'Đặt hàng thất bại'}
+            </p>
+          )}
+
+          <button
+            onClick={() => checkoutMutation.mutate()}
+            disabled={checkoutMutation.isPending}
+            className="mt-6 h-12 w-full rounded-full bg-red-600 font-bold uppercase text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+          >
+            {checkoutMutation.isPending ? 'Đang xử lý...' : 'Thanh toán'}
+          </button>
+        </aside>
       </div>
     </div>
   );

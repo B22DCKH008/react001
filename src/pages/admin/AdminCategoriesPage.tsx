@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { categoryApi } from '../../api/category';
 import type { Category } from '../../types/api.types';
 import AdminNav from '../../components/admin/AdminNav';
@@ -12,7 +12,7 @@ export default function AdminCategoriesPage() {
   const [form, setForm] = useState({ name: '', description: '' });
   const [error, setError] = useState('');
 
-  const { data: categories, isLoading } = useQuery({
+  const { data: categories = [], isLoading } = useQuery({
     queryKey: ['adminCategories'],
     queryFn: categoryApi.getAll,
   });
@@ -50,113 +50,116 @@ export default function AdminCategoriesPage() {
     setError('');
   };
 
-  const openEdit = (cat: Category) => {
-    setEditing(cat);
-    setForm({ name: cat.name, description: cat.description ?? '' });
+  const openCreate = () => {
+    setShowForm(true);
+    setEditing(null);
+    setForm({ name: '', description: '' });
+    setError('');
+  };
+
+  const openEdit = (category: Category) => {
+    setEditing(category);
+    setForm({ name: category.name, description: category.description ?? '' });
     setShowForm(true);
     setError('');
   };
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
     if (!form.name.trim()) {
       setError('Tên danh mục không được để trống');
       return;
     }
-    const data = { name: form.name.trim(), description: form.description.trim() || undefined };
-    if (editing) updateMutation.mutate({ id: editing.id, data });
-    else createMutation.mutate(data);
+    const payload = { name: form.name.trim(), description: form.description.trim() || undefined };
+    if (editing) updateMutation.mutate({ id: editing.id, data: payload });
+    else createMutation.mutate(payload);
   };
 
-  const handleDelete = (cat: Category) => {
-    if (window.confirm(`Xoá danh mục "${cat.name}"?`)) deleteMutation.mutate(cat.id);
+  const handleDelete = (category: Category) => {
+    if (window.confirm(`Xóa danh mục "${category.name}"?`)) deleteMutation.mutate(category.id);
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="max-w-6xl mx-auto py-6 px-4">
+    <div className="mx-auto max-w-[1700px] bg-white px-5 py-6 lg:px-8">
       <AdminNav />
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-bold text-gray-800">Quản lý danh mục</h1>
+
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-gray-200 pb-5">
+        <div>
+          <h1 className="text-3xl font-bold uppercase text-gray-800">Quản lý danh mục</h1>
+          <p className="mt-1 text-gray-500">Tổ chức nhóm sản phẩm hiển thị ở bộ lọc trang chủ.</p>
+        </div>
         {!showForm && (
-          <button
-            onClick={() => {
-              setShowForm(true);
-              setEditing(null);
-              setForm({ name: '', description: '' });
-              setError('');
-            }}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
+          <button onClick={openCreate} className="rounded-full bg-red-600 px-5 py-3 font-bold text-white hover:bg-red-700">
             + Thêm danh mục
           </button>
         )}
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Tên danh mục *</label>
+        <form onSubmit={handleSubmit} className="mb-6 grid gap-4 rounded-[8px] border border-red-100 bg-red-50 p-5 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-bold text-gray-700">Tên danh mục *</label>
             <input
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(event) => setForm({ ...form, name: event.target.value })}
+              className="w-full rounded-[8px] border border-gray-300 px-3 py-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
               placeholder="Tên danh mục"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
-          <div className="flex-1 min-w-[180px]">
-            <label className="block text-xs font-medium text-gray-600 mb-1">Mô tả</label>
+          <div>
+            <label className="mb-2 block text-sm font-bold text-gray-700">Mô tả</label>
             <input
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Mô tả (tuỳ chọn)"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              onChange={(event) => setForm({ ...form, description: event.target.value })}
+              className="w-full rounded-[8px] border border-gray-300 px-3 py-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              placeholder="Mô tả tùy chọn"
             />
           </div>
-          {error && <p className="w-full text-red-500 text-sm">{error}</p>}
-          <button
-            type="submit"
-            disabled={isPending}
-            className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            {isPending ? 'Đang lưu...' : editing ? 'Cập nhật' : 'Tạo mới'}
-          </button>
-          <button
-            type="button"
-            onClick={resetForm}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Huỷ
-          </button>
+          {error && <p className="md:col-span-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-600">{error}</p>}
+          <div className="flex gap-3 md:col-span-2">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-full bg-red-600 px-5 py-2.5 font-bold text-white hover:bg-red-700 disabled:opacity-60"
+            >
+              {isPending ? 'Đang lưu...' : editing ? 'Cập nhật' : 'Tạo mới'}
+            </button>
+            <button type="button" onClick={resetForm} className="rounded-full border border-gray-300 px-5 py-2.5 font-bold text-gray-700 hover:border-red-600 hover:text-red-600">
+              Hủy
+            </button>
+          </div>
         </form>
       )}
 
       {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Đang tải...</div>
+        <div className="py-16 text-center text-gray-500">Đang tải...</div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+        <div className="overflow-x-auto rounded-[8px] border border-gray-200 bg-white shadow-sm">
+          <table className="w-full min-w-[760px] text-sm">
+            <thead className="bg-red-50 text-xs uppercase text-gray-600">
               <tr>
-                <th className="px-4 py-3 text-left w-12">ID</th>
+                <th className="px-4 py-3 text-left">ID</th>
                 <th className="px-4 py-3 text-left">Tên</th>
                 <th className="px-4 py-3 text-left">Mô tả</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-4 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {!categories?.length && (
-                <tr><td colSpan={4} className="text-center py-8 text-gray-500">Chưa có danh mục nào</td></tr>
+              {!categories.length && (
+                <tr><td colSpan={4} className="py-10 text-center text-gray-500">Chưa có danh mục nào</td></tr>
               )}
-              {categories?.map((cat) => (
-                <tr key={cat.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-400">{cat.id}</td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{cat.name}</td>
-                  <td className="px-4 py-3 text-gray-500">{cat.description ?? '—'}</td>
-                  <td className="px-4 py-3 text-right space-x-3">
-                    <button onClick={() => openEdit(cat)} className="text-blue-600 hover:text-blue-800 text-xs font-medium">Sửa</button>
-                    <button onClick={() => handleDelete(cat)} className="text-red-500 hover:text-red-700 text-xs font-medium">Xoá</button>
+              {categories.map((category) => (
+                <tr key={category.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 font-bold text-gray-400">#{category.id}</td>
+                  <td className="px-4 py-3 font-bold text-gray-900">{category.name}</td>
+                  <td className="px-4 py-3 text-gray-600">{category.description ?? 'Không có mô tả'}</td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openEdit(category)} className="rounded-full border border-gray-300 px-3 py-1.5 font-semibold text-gray-700 hover:border-red-600 hover:text-red-600">Sửa</button>
+                      <button onClick={() => handleDelete(category)} className="rounded-full bg-red-50 px-3 py-1.5 font-semibold text-red-600 hover:bg-red-100">Xóa</button>
+                    </div>
                   </td>
                 </tr>
               ))}

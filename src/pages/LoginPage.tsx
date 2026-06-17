@@ -4,6 +4,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
 import { authApi } from '../api/auth';
 
+function getErrorMessage(error: unknown, fallback: string) {
+  const apiError = error as { response?: { data?: { message?: string } } };
+  return apiError.response?.data?.message || fallback;
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,19 +21,29 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!email || !password) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password) {
       setError('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+    if (trimmedEmail.length > 254) {
+      setError('Email không được vượt quá 254 ký tự');
+      return;
+    }
+    if (password.length > 72) {
+      setError('Mật khẩu không được vượt quá 72 ký tự');
       return;
     }
 
     setError('');
     setLoading(true);
     try {
-      const tokens = await authApi.login(email, password);
+      const tokens = await authApi.login(trimmedEmail, password);
       await login(tokens.access_token, tokens.refresh_token);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Email hoặc mật khẩu không đúng');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Email hoặc mật khẩu không đúng'));
     } finally {
       setLoading(false);
     }
@@ -59,6 +74,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              maxLength={254}
               placeholder="Nhập Email"
               className="mt-4 w-full border-0 border-b border-white/55 bg-transparent px-0 pb-3 text-xl font-semibold text-white outline-none placeholder:text-white/40 focus:border-yellow-300"
             />
@@ -72,6 +88,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              maxLength={72}
               placeholder="Nhập Mật khẩu"
               className="mt-4 w-full border-0 border-b border-white/55 bg-transparent px-0 pb-3 text-xl font-semibold text-white outline-none placeholder:text-white/40 focus:border-yellow-300"
             />

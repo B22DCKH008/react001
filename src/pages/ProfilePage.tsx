@@ -3,6 +3,14 @@ import type { FormEvent } from 'react';
 import { useAuth } from '../store/AuthContext';
 import { userApi } from '../api/user';
 
+function getErrorMessage(error: unknown, fallback: string) {
+  const apiError = error as { response?: { data?: { message?: string | string[] } } };
+  const message = apiError.response?.data?.message;
+
+  if (Array.isArray(message)) return message.join(', ');
+  return message || fallback;
+}
+
 export default function ProfilePage() {
   const { user } = useAuth();
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
@@ -12,8 +20,16 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (form.currentPassword.length > 72) {
+      setError('Mật khẩu hiện tại không được vượt quá 72 ký tự');
+      return;
+    }
     if (form.newPassword.length < 6) {
       setError('Mật khẩu mới phải có ít nhất 6 ký tự');
+      return;
+    }
+    if (form.newPassword.length > 72) {
+      setError('Mật khẩu mới không được vượt quá 72 ký tự');
       return;
     }
     if (form.newPassword !== form.confirmNewPassword) {
@@ -27,8 +43,8 @@ export default function ProfilePage() {
       setSuccess(res.message);
       setForm({ currentPassword: '', newPassword: '', confirmNewPassword: '' });
       setTimeout(() => setSuccess(''), 3000);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Đổi mật khẩu thất bại');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Đổi mật khẩu thất bại'));
     } finally {
       setLoading(false);
     }
@@ -62,6 +78,7 @@ export default function ProfilePage() {
               type="password"
               value={form.currentPassword}
               onChange={(e) => setForm({ ...form, currentPassword: e.target.value })}
+              maxLength={72}
               placeholder="••••••••"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -72,6 +89,8 @@ export default function ProfilePage() {
               type="password"
               value={form.newPassword}
               onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
+              minLength={6}
+              maxLength={72}
               placeholder="Tối thiểu 6 ký tự"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -82,6 +101,8 @@ export default function ProfilePage() {
               type="password"
               value={form.confirmNewPassword}
               onChange={(e) => setForm({ ...form, confirmNewPassword: e.target.value })}
+              minLength={6}
+              maxLength={72}
               placeholder="••••••••"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />

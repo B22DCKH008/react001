@@ -8,6 +8,7 @@ export interface Product {
   id: number;
   name: string;
   price: number;
+  stock: number;
   description: string;
   image_url?: string | null;
   category?: Category;
@@ -46,7 +47,7 @@ export interface OrderItem {
   subtotal: number;
 }
 
-export type OrderStatus = 'pending' | 'confirmed' | 'cancelled';
+export type OrderStatus = "pending" | "confirmed" | "cancelled";
 
 export interface Order {
   id: number;
@@ -62,7 +63,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'user' | 'admin';
+  role: "user" | "admin";
 }
 
 export interface AuthTokens {

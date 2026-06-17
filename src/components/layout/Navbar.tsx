@@ -86,6 +86,17 @@ export default function Navbar() {
             </Link>
           )}
 
+          {isLoggedIn && (
+            <Link
+              to={isAdmin ? '/admin/orders' : '/orders'}
+              aria-label="Đơn hàng"
+              title="Đơn hàng"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-red-950 text-xl transition-colors hover:bg-red-900"
+            >
+              &#129534;
+            </Link>
+          )}
+
           <Link to="/cart" className="relative flex h-11 w-11 items-center justify-center rounded-full bg-red-950 text-xl hover:bg-red-900">
             &#128717;
             <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold text-red-700">

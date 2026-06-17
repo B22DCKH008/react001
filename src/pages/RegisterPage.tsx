@@ -3,6 +3,14 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../api/auth';
 
+function getErrorMessage(error: unknown, fallback: string) {
+  const apiError = error as { response?: { data?: { message?: string | string[] } } };
+  const message = apiError.response?.data?.message;
+
+  if (Array.isArray(message)) return message[0] || fallback;
+  return message || fallback;
+}
+
 export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -13,23 +21,37 @@ export default function RegisterPage() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!name || !email || !password) {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName || !trimmedEmail || !password) {
       setError('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+    if (trimmedName.length > 50) {
+      setError('Họ tên không được vượt quá 50 ký tự');
+      return;
+    }
+    if (trimmedEmail.length > 254) {
+      setError('Email không được vượt quá 254 ký tự');
       return;
     }
     if (password.length < 6) {
       setError('Mật khẩu tối thiểu 6 ký tự');
       return;
     }
+    if (password.length > 72) {
+      setError('Mật khẩu không được vượt quá 72 ký tự');
+      return;
+    }
 
     setError('');
     setLoading(true);
     try {
-      await authApi.register(name, email, password);
+      await authApi.register(trimmedName, trimmedEmail, password);
       navigate('/login', { state: { message: 'Đăng ký thành công! Vui lòng đăng nhập.' } });
-    } catch (err: any) {
-      const message = err.response?.data?.message;
-      setError(Array.isArray(message) ? message[0] : message || 'Đăng ký thất bại');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Đăng ký thất bại'));
     } finally {
       setLoading(false);
     }
@@ -54,6 +76,7 @@ export default function RegisterPage() {
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
+              maxLength={50}
               placeholder="Nhập họ tên"
               className="mt-4 w-full border-0 border-b border-white/55 bg-transparent px-0 pb-3 text-xl font-semibold text-white outline-none placeholder:text-white/40 focus:border-yellow-300"
             />
@@ -67,6 +90,7 @@ export default function RegisterPage() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              maxLength={254}
               placeholder="Nhập Email"
               className="mt-4 w-full border-0 border-b border-white/55 bg-transparent px-0 pb-3 text-xl font-semibold text-white outline-none placeholder:text-white/40 focus:border-yellow-300"
             />
@@ -80,6 +104,8 @@ export default function RegisterPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              minLength={6}
+              maxLength={72}
               placeholder="Tối thiểu 6 ký tự"
               className="mt-4 w-full border-0 border-b border-white/55 bg-transparent px-0 pb-3 text-xl font-semibold text-white outline-none placeholder:text-white/40 focus:border-yellow-300"
             />

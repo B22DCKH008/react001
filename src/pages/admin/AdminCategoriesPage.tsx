@@ -5,6 +5,14 @@ import { categoryApi } from '../../api/category';
 import type { Category } from '../../types/api.types';
 import AdminNav from '../../components/admin/AdminNav';
 
+function getErrorMessage(error: unknown, fallback: string) {
+  const apiError = error as { response?: { data?: { message?: string | string[] } } };
+  const message = apiError.response?.data?.message;
+
+  if (Array.isArray(message)) return message.join(', ');
+  return message || fallback;
+}
+
 export default function AdminCategoriesPage() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Category | null>(null);
@@ -25,7 +33,7 @@ export default function AdminCategoriesPage() {
       invalidate();
       resetForm();
     },
-    onError: (err: any) => setError(err.response?.data?.message || 'Lỗi tạo danh mục'),
+    onError: (err: unknown) => setError(getErrorMessage(err, 'Lỗi tạo danh mục')),
   });
 
   const updateMutation = useMutation({
@@ -35,7 +43,7 @@ export default function AdminCategoriesPage() {
       invalidate();
       resetForm();
     },
-    onError: (err: any) => setError(err.response?.data?.message || 'Lỗi cập nhật'),
+    onError: (err: unknown) => setError(getErrorMessage(err, 'Lỗi cập nhật')),
   });
 
   const deleteMutation = useMutation({
@@ -68,6 +76,10 @@ export default function AdminCategoriesPage() {
     event.preventDefault();
     if (!form.name.trim()) {
       setError('Tên danh mục không được để trống');
+      return;
+    }
+    if (form.name.trim().length > 100) {
+      setError('Tên danh mục không được vượt quá 100 ký tự');
       return;
     }
     const payload = { name: form.name.trim(), description: form.description.trim() || undefined };
@@ -104,6 +116,7 @@ export default function AdminCategoriesPage() {
             <input
               value={form.name}
               onChange={(event) => setForm({ ...form, name: event.target.value })}
+              maxLength={100}
               className="w-full rounded-[8px] border border-gray-300 px-3 py-3 outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
               placeholder="Tên danh mục"
             />
